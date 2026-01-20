@@ -1,35 +1,29 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: clinical_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "clinical_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   app:
     build: .
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/clinical_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/clinical_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: clinical_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  mysql_data:
