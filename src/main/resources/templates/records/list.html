@@ -1,0 +1,278 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<title>Clinical Records</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+		/>
+	</head>
+	<body>
+		<div class="container mt-4">
+			<h1>Clinical Records</h1>
+
+			<form method="get" class="mb-3">
+				<div class="input-group">
+					<input
+						type="text"
+						name="patientId"
+						class="form-control"
+						placeholder="Filter by Patient ID"
+						th:value="${patientId}"
+					/>
+					<button class="btn btn-primary" type="submit">Filter</button>
+				</div>
+			</form>
+
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Patient ID</th>
+						<th>Symptoms</th>
+						<th>Diagnosis</th>
+						<th>Treatment</th>
+						<th>Created At</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="record : ${records.content}">
+						<td th:text="${record.id}"></td>
+						<td th:text="${record.patient.id}"></td>
+						<td th:text="${record.symptoms}"></td>
+						<td th:text="${record.diagnosis}"></td>
+						<td th:text="${record.treatment}"></td>
+						<td th:text="${record.createdAt}"></td>
+						<td>
+							<a
+								th:href="@{/records/{id}(id=${record.id})}"
+								class="btn btn-info btn-sm"
+								>View</a
+							>
+							<button
+								class="btn btn-warning btn-sm"
+								data-bs-toggle="modal"
+								th:attr="data-bs-target='#editRecordModal'"
+								th:onclick="setEditRecord(${record})"
+							>
+								Edit
+							</button>
+							<form
+								th:action="@{/records/{id}/delete(id=${record.id})}"
+								method="post"
+								class="d-inline"
+							>
+								<input type="hidden" name="_method" value="DELETE" />
+								<button class="btn btn-danger btn-sm" type="submit">
+									Delete
+								</button>
+							</form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<nav th:if="${records.totalPages > 1}">
+				<ul class="pagination">
+					<li
+						class="page-item"
+						th:classappend="${records.first ? 'disabled' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/records(page=${records.number - 1}, size=${records.size}, patientId=${patientId})}"
+							>Previous</a
+						>
+					</li>
+					<li
+						class="page-item"
+						th:each="page : ${#numbers.sequence(0, records.totalPages - 1)}"
+						th:classappend="${page == records.number ? 'active' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/records(page=${page}, size=${records.size}, patientId=${patientId})}"
+							th:text="${page + 1}"
+						></a>
+					</li>
+					<li
+						class="page-item"
+						th:classappend="${records.last ? 'disabled' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/records(page=${records.number + 1}, size=${records.size}, patientId=${patientId})}"
+							>Next</a
+						>
+					</li>
+				</ul>
+			</nav>
+
+			<button
+				class="btn btn-success"
+				data-bs-toggle="modal"
+				data-bs-target="#addRecordModal"
+			>
+				Add Record
+			</button>
+		</div>
+
+		<!-- Add Record Modal -->
+		<div
+			class="modal fade"
+			id="addRecordModal"
+			tabindex="-1"
+			aria-labelledby="addRecordModalLabel"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="addRecordModalLabel">
+							Add Clinical Record
+						</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<form th:action="@{/records}" method="post">
+						<div class="modal-body">
+							<div class="mb-3">
+								<label for="patientId" class="form-label">Patient ID</label>
+								<input
+									type="number"
+									class="form-control"
+									id="patientId"
+									name="patientId"
+									required
+								/>
+							</div>
+							<div class="mb-3">
+								<label for="symptoms" class="form-label">Symptoms</label>
+								<textarea
+									class="form-control"
+									id="symptoms"
+									name="symptoms"
+									required
+								></textarea>
+							</div>
+							<div class="mb-3">
+								<label for="diagnosis" class="form-label">Diagnosis</label>
+								<textarea
+									class="form-control"
+									id="diagnosis"
+									name="diagnosis"
+									required
+								></textarea>
+							</div>
+							<div class="mb-3">
+								<label for="treatment" class="form-label">Treatment</label>
+								<textarea
+									class="form-control"
+									id="treatment"
+									name="treatment"
+									required
+								></textarea>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button
+								type="button"
+								class="btn btn-secondary"
+								data-bs-dismiss="modal"
+							>
+								Close
+							</button>
+							<button type="submit" class="btn btn-primary">Save</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Edit Record Modal -->
+		<div
+			class="modal fade"
+			id="editRecordModal"
+			tabindex="-1"
+			aria-labelledby="editRecordModalLabel"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="editRecordModalLabel">
+							Edit Clinical Record
+						</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<form th:action="@{/records/{id}(id=${record.id})}" method="post">
+						<input type="hidden" name="_method" value="PUT" />
+						<div class="modal-body">
+							<div class="mb-3">
+								<label for="editSymptoms" class="form-label">Symptoms</label>
+								<textarea
+									class="form-control"
+									id="editSymptoms"
+									name="symptoms"
+									th:text="${record.symptoms}"
+									required
+								></textarea>
+							</div>
+							<div class="mb-3">
+								<label for="editDiagnosis" class="form-label">Diagnosis</label>
+								<textarea
+									class="form-control"
+									id="editDiagnosis"
+									name="diagnosis"
+									th:text="${record.diagnosis}"
+									required
+								></textarea>
+							</div>
+							<div class="mb-3">
+								<label for="editTreatment" class="form-label">Treatment</label>
+								<textarea
+									class="form-control"
+									id="editTreatment"
+									name="treatment"
+									th:text="${record.treatment}"
+									required
+								></textarea>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button
+								type="button"
+								class="btn btn-secondary"
+								data-bs-dismiss="modal"
+							>
+								Close
+							</button>
+							<button type="submit" class="btn btn-primary">
+								Save changes
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			function setEditRecord(record) {
+				document.getElementById("editSymptoms").value = record.symptoms;
+				document.getElementById("editDiagnosis").value = record.diagnosis;
+				document.getElementById("editTreatment").value = record.treatment;
+			}
+		</script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>

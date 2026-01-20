@@ -1,0 +1,268 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<title>Patients</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+		/>
+	</head>
+	<body>
+		<div class="container mt-4">
+			<h1>Patients</h1>
+
+			<form method="get" class="mb-3">
+				<div class="input-group">
+					<input
+						type="text"
+						name="search"
+						class="form-control"
+						placeholder="Search by name or document ID"
+						th:value="${search}"
+					/>
+					<button class="btn btn-primary" type="submit">Search</button>
+				</div>
+			</form>
+
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Document ID</th>
+						<th>Full Name</th>
+						<th>Birth Date</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="patient : ${patients.content}">
+						<td th:text="${patient.id}"></td>
+						<td th:text="${patient.documentId}"></td>
+						<td th:text="${patient.fullName}"></td>
+						<td th:text="${patient.birthDate}"></td>
+						<td>
+							<a
+								th:href="@{/patients/{id}(id=${patient.id})}"
+								class="btn btn-info btn-sm"
+								>View</a
+							>
+							<button
+								class="btn btn-warning btn-sm"
+								data-bs-toggle="modal"
+								th:attr="data-bs-target='#editPatientModal'"
+								th:onclick="setEditPatient(${patient})"
+							>
+								Edit
+							</button>
+							<form
+								th:action="@{/patients/{id}/delete(id=${patient.id})}"
+								method="post"
+								class="d-inline"
+							>
+								<input type="hidden" name="_method" value="DELETE" />
+								<button class="btn btn-danger btn-sm" type="submit">
+									Delete
+								</button>
+							</form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<nav th:if="${patients.totalPages > 1}">
+				<ul class="pagination">
+					<li
+						class="page-item"
+						th:classappend="${patients.first ? 'disabled' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/patients(page=${patients.number - 1}, size=${patients.size}, search=${search})}"
+							>Previous</a
+						>
+					</li>
+					<li
+						class="page-item"
+						th:each="page : ${#numbers.sequence(0, patients.totalPages - 1)}"
+						th:classappend="${page == patients.number ? 'active' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/patients(page=${page}, size=${patients.size}, search=${search})}"
+							th:text="${page + 1}"
+						></a>
+					</li>
+					<li
+						class="page-item"
+						th:classappend="${patients.last ? 'disabled' : ''}"
+					>
+						<a
+							class="page-link"
+							th:href="@{/patients(page=${patients.number + 1}, size=${patients.size}, search=${search})}"
+							>Next</a
+						>
+					</li>
+				</ul>
+			</nav>
+
+			<button
+				class="btn btn-success"
+				data-bs-toggle="modal"
+				data-bs-target="#addPatientModal"
+			>
+				Add Patient
+			</button>
+		</div>
+
+		<!-- Add Patient Modal -->
+		<div
+			class="modal fade"
+			id="addPatientModal"
+			tabindex="-1"
+			aria-labelledby="addPatientModalLabel"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="addPatientModalLabel">Add Patient</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<form th:action="@{/patients}" method="post">
+						<div class="modal-body">
+							<div class="mb-3">
+								<label for="documentId" class="form-label">Document ID</label>
+								<input
+									type="text"
+									class="form-control"
+									id="documentId"
+									name="documentId"
+									required
+								/>
+							</div>
+							<div class="mb-3">
+								<label for="fullName" class="form-label">Full Name</label>
+								<input
+									type="text"
+									class="form-control"
+									id="fullName"
+									name="fullName"
+									required
+								/>
+							</div>
+							<div class="mb-3">
+								<label for="birthDate" class="form-label">Birth Date</label>
+								<input
+									type="date"
+									class="form-control"
+									id="birthDate"
+									name="birthDate"
+									required
+								/>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button
+								type="button"
+								class="btn btn-secondary"
+								data-bs-dismiss="modal"
+							>
+								Close
+							</button>
+							<button type="submit" class="btn btn-primary">Save</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Edit Patient Modal -->
+		<div
+			class="modal fade"
+			id="editPatientModal"
+			tabindex="-1"
+			aria-labelledby="editPatientModalLabel"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="editPatientModalLabel">Edit Patient</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<form th:action="@{/patients/{id}(id=${patient.id})}" method="post">
+						<input type="hidden" name="_method" value="PUT" />
+						<div class="modal-body">
+							<div class="mb-3">
+								<label for="editDocumentId" class="form-label"
+									>Document ID</label
+								>
+								<input
+									type="text"
+									class="form-control"
+									id="editDocumentId"
+									name="documentId"
+									th:value="${patient.documentId}"
+									required
+								/>
+							</div>
+							<div class="mb-3">
+								<label for="editFullName" class="form-label">Full Name</label>
+								<input
+									type="text"
+									class="form-control"
+									id="editFullName"
+									name="fullName"
+									th:value="${patient.fullName}"
+									required
+								/>
+							</div>
+							<div class="mb-3">
+								<label for="editBirthDate" class="form-label">Birth Date</label>
+								<input
+									type="date"
+									class="form-control"
+									id="editBirthDate"
+									name="birthDate"
+									th:value="${patient.birthDate}"
+									required
+								/>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button
+								type="button"
+								class="btn btn-secondary"
+								data-bs-dismiss="modal"
+							>
+								Close
+							</button>
+							<button type="submit" class="btn btn-primary">
+								Save changes
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			function setEditPatient(patient) {
+				document.getElementById("editDocumentId").value = patient.documentId;
+				document.getElementById("editFullName").value = patient.fullName;
+				document.getElementById("editBirthDate").value = patient.birthDate;
+			}
+		</script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>

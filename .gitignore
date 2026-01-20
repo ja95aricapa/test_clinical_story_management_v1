@@ -1,0 +1,56 @@
+# General
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Maven
+/target/
+*.iml
+*.ipr
+*.iws
+
+# IntelliJ IDEA
+.idea/
+*.class
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# NetBeans
+nbproject/
+
+# VS Code
+.vscode/
+
+# OS-specific
+*.bak
+*.orig
+
+# Docker
+*.env
+**/docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+
+# Spring Boot
+*.jar
+*.war
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Generated files
+*.class
+*.jar
+*.war
+*.ear
