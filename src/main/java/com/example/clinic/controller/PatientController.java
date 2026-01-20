@@ -48,7 +48,6 @@ public class PatientController {
         return patientService.getPatient(id).map(patient -> {
             model.addAttribute("patient", patient);
 
-            // Small "recent records" section for navigation convenience
             Pageable recent = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
             model.addAttribute("recentRecords", clinicalRecordService.listRecords(id, recent));
 
@@ -65,8 +64,10 @@ public class PatientController {
         try {
             patientService.createPatient(patient);
             redirectAttributes.addFlashAttribute("success", "Patient created successfully");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "A patient with that Document ID already exists.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to create patient: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to create patient.");
         }
         return "redirect:/patients";
     }
@@ -78,8 +79,10 @@ public class PatientController {
         try {
             patientService.updatePatient(id, patient);
             redirectAttributes.addFlashAttribute("success", "Patient updated successfully");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "A patient with that Document ID already exists.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to update patient: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to update patient.");
         }
         return "redirect:/patients";
     }
@@ -91,7 +94,7 @@ public class PatientController {
             patientService.deletePatient(id);
             redirectAttributes.addFlashAttribute("success", "Patient deleted successfully");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to delete patient: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to delete patient.");
         }
         return "redirect:/patients";
     }

@@ -204,27 +204,39 @@
 
 					<form th:action="@{/records}" method="post" id="addRecordForm">
 						<div class="modal-body">
-							<div class="mb-3">
+							<!-- If we are filtering by a patient, lock the patient (read-only) -->
+							<div
+								th:if="${patientId != null and selectedPatient != null}"
+								class="mb-3"
+							>
 								<label class="form-label">Patient</label>
-								<select
-									class="form-select"
+								<input
+									type="text"
+									class="form-control"
+									readonly
+									th:value="${selectedPatient.id + ' - ' + selectedPatient.fullName + ' (doc: ' + selectedPatient.documentId + ')'}"
+								/>
+								<input
+									type="hidden"
 									name="patientId"
-									id="addPatientId"
-									required
-								>
-									<option value="" disabled th:selected="${patientId == null}">
-										Select a patient
-									</option>
+									th:value="${selectedPatient.id}"
+								/>
+							</div>
+
+							<!-- Otherwise allow selecting a patient -->
+							<div th:if="${patientId == null}" class="mb-3">
+								<label class="form-label">Patient</label>
+								<select class="form-select" name="patientId" required>
+									<option value="" disabled selected>Select a patient</option>
 									<option
 										th:each="p : ${patientsList}"
 										th:value="${p.id}"
-										th:selected="${patientId != null and p.id == patientId}"
 										th:text="${p.id + ' - ' + p.fullName + ' (doc: ' + p.documentId + ')'}"
 									></option>
 								</select>
 								<div class="form-text">
-									Tip: filter by patient and then add a record, so you don't
-									pick the wrong patient.
+									Tip: filter by patient first, then add a record (to avoid
+									mistakes).
 								</div>
 							</div>
 
@@ -294,16 +306,13 @@
 
 						<div class="modal-body">
 							<div class="mb-3">
-								<label class="form-label">Patient ID (read-only)</label>
+								<label class="form-label">Patient ID</label>
 								<input
 									type="text"
 									class="form-control"
 									id="editRecordPatientId"
 									readonly
 								/>
-								<div class="form-text">
-									Patient cannot be changed for an existing record.
-								</div>
 							</div>
 
 							<div class="mb-3">

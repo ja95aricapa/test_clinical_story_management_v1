@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import com.example.clinic.repository.PatientRepository;
 
 /**
  * Patient service (DB-only).
+ * Contains basic CRUD operations for Patient.
  */
 @Service
 public class PatientService {
@@ -38,15 +40,40 @@ public class PatientService {
     }
 
     public Patient createPatient(Patient patient) {
-        return patientRepository.save(patient);
+        // Basic guard to avoid showing raw SQL constraint errors in the UI
+        if (patient.getDocumentId() != null && patientRepository.existsByDocumentId(patient.getDocumentId())) {
+            throw new IllegalArgumentException("Document ID already exists");
+        }
+
+        try {
+            return patientRepository.save(patient);
+        } catch (DataIntegrityViolationException e) {
+            // Fallback in case of race conditions or unexpected unique constraint errors
+            throw new IllegalArgumentException("Document ID already exists");
+        }
     }
 
     public Patient updatePatient(Long id, Patient updatedPatient) {
         return patientRepository.findById(id).map(patient -> {
+
+            // If user changed the documentId, validate uniqueness
+            String newDoc = updatedPatient.getDocumentId();
+            if (newDoc != null && !newDoc.equals(patient.getDocumentId())) {
+                if (patientRepository.existsByDocumentId(newDoc)) {
+                    throw new IllegalArgumentException("Document ID already exists");
+                }
+            }
+
             patient.setFullName(updatedPatient.getFullName());
             patient.setDocumentId(updatedPatient.getDocumentId());
             patient.setBirthDate(updatedPatient.getBirthDate());
-            return patientRepository.save(patient);
+
+            try {
+                return patientRepository.save(patient);
+            } catch (DataIntegrityViolationException e) {
+                throw new IllegalArgumentException("Document ID already exists");
+            }
+
         }).orElseThrow(() -> new RuntimeException("Patient not found"));
     }
 

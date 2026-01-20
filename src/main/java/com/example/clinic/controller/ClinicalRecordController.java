@@ -1,18 +1,25 @@
 package com.example.clinic.controller;
 
-import com.example.clinic.model.ClinicalRecord;
-import com.example.clinic.model.Patient;
-import com.example.clinic.service.ClinicalRecordService;
-import com.example.clinic.service.PatientService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import com.example.clinic.model.ClinicalRecord;
+import com.example.clinic.model.Patient;
+import com.example.clinic.service.ClinicalRecordService;
+import com.example.clinic.service.PatientService;
 
 @Controller
 @RequestMapping("/records")
@@ -28,12 +35,17 @@ public class ClinicalRecordController {
     public String listRecords(@RequestParam(required = false) Long patientId,
                               Pageable pageable,
                               Model model) {
+
         Page<ClinicalRecord> records = clinicalRecordService.listRecords(patientId, pageable);
         List<Patient> patientsList = patientService.listAllPatients();
 
         model.addAttribute("records", records);
         model.addAttribute("patientId", patientId);
         model.addAttribute("patientsList", patientsList);
+
+        if (patientId != null) {
+            patientService.getPatient(patientId).ifPresent(p -> model.addAttribute("selectedPatient", p));
+        }
 
         return "records/list";
     }
@@ -61,8 +73,11 @@ public class ClinicalRecordController {
             clinicalRecordService.createRecord(patientId, symptoms, diagnosis, treatment);
             redirectAttributes.addFlashAttribute("success", "Record created successfully");
             return "redirect:/records?patientId=" + patientId;
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "Patient not found. Please select a valid patient.");
+            return "redirect:/records";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to create record: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to create record.");
             return "redirect:/records";
         }
     }
@@ -80,8 +95,11 @@ public class ClinicalRecordController {
 
             redirectAttributes.addFlashAttribute("success", "Record updated successfully");
             return "redirect:/records?patientId=" + patientId;
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "Record not found.");
+            return "redirect:/records";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to update record: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to update record.");
             return "redirect:/records";
         }
     }
@@ -102,7 +120,7 @@ public class ClinicalRecordController {
             }
             return "redirect:/records";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to delete record: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to delete record.");
             return "redirect:/records";
         }
     }
