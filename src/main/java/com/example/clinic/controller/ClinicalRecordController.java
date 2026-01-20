@@ -1,7 +1,9 @@
 package com.example.clinic.controller;
 
 import com.example.clinic.model.ClinicalRecord;
+import com.example.clinic.model.Patient;
 import com.example.clinic.service.ClinicalRecordService;
+import com.example.clinic.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/records")
 public class ClinicalRecordController {
@@ -17,16 +21,27 @@ public class ClinicalRecordController {
     @Autowired
     private ClinicalRecordService clinicalRecordService;
 
+    @Autowired
+    private PatientService patientService;
+
     @GetMapping
-    public String listRecords(@RequestParam(required = false) Long patientId, Pageable pageable, Model model) {
+    public String listRecords(@RequestParam(required = false) Long patientId,
+                              Pageable pageable,
+                              Model model) {
         Page<ClinicalRecord> records = clinicalRecordService.listRecords(patientId, pageable);
+        List<Patient> patientsList = patientService.listAllPatients();
+
         model.addAttribute("records", records);
         model.addAttribute("patientId", patientId);
+        model.addAttribute("patientsList", patientsList);
+
         return "records/list";
     }
 
     @GetMapping("/{id}")
-    public String viewRecord(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String viewRecord(@PathVariable Long id,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
         return clinicalRecordService.getRecord(id).map(record -> {
             model.addAttribute("record", record);
             return "records/view";
@@ -37,23 +52,58 @@ public class ClinicalRecordController {
     }
 
     @PostMapping
-    public String createRecord(@ModelAttribute ClinicalRecord record, RedirectAttributes redirectAttributes) {
-        clinicalRecordService.createRecord(record);
-        redirectAttributes.addFlashAttribute("success", "Record created successfully");
-        return "redirect:/records";
+    public String createRecord(@RequestParam Long patientId,
+                               @RequestParam String symptoms,
+                               @RequestParam String diagnosis,
+                               @RequestParam String treatment,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            clinicalRecordService.createRecord(patientId, symptoms, diagnosis, treatment);
+            redirectAttributes.addFlashAttribute("success", "Record created successfully");
+            return "redirect:/records?patientId=" + patientId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to create record: " + e.getMessage());
+            return "redirect:/records";
+        }
     }
 
-    @PostMapping("/{id}")
-    public String updateRecord(@PathVariable Long id, @ModelAttribute ClinicalRecord record, RedirectAttributes redirectAttributes) {
-        clinicalRecordService.updateRecord(id, record);
-        redirectAttributes.addFlashAttribute("success", "Record updated successfully");
-        return "redirect:/records";
+    @PutMapping("/{id}")
+    public String updateRecord(@PathVariable Long id,
+                               @RequestParam String symptoms,
+                               @RequestParam String diagnosis,
+                               @RequestParam String treatment,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            Long patientId = clinicalRecordService.updateRecord(id, symptoms, diagnosis, treatment)
+                    .getPatient()
+                    .getId();
+
+            redirectAttributes.addFlashAttribute("success", "Record updated successfully");
+            return "redirect:/records?patientId=" + patientId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to update record: " + e.getMessage());
+            return "redirect:/records";
+        }
     }
 
     @DeleteMapping("/{id}")
-    public String deleteRecord(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        clinicalRecordService.deleteRecord(id);
-        redirectAttributes.addFlashAttribute("success", "Record deleted successfully");
-        return "redirect:/records";
+    public String deleteRecord(@PathVariable Long id,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            Long patientId = clinicalRecordService.getRecord(id)
+                    .map(r -> r.getPatient().getId())
+                    .orElse(null);
+
+            clinicalRecordService.deleteRecord(id);
+            redirectAttributes.addFlashAttribute("success", "Record deleted successfully");
+
+            if (patientId != null) {
+                return "redirect:/records?patientId=" + patientId;
+            }
+            return "redirect:/records";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to delete record: " + e.getMessage());
+            return "redirect:/records";
+        }
     }
 }

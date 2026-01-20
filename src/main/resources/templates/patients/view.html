@@ -1,0 +1,99 @@
+view.html<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<title>Patient Details</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+		/>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+			<div class="container">
+				<a class="navbar-brand" href="/patients">Clinic</a>
+				<div class="navbar-nav">
+					<a class="nav-link" href="/patients">Patients</a>
+					<a class="nav-link" href="/records">Records</a>
+				</div>
+			</div>
+		</nav>
+
+		<div class="container mt-4">
+			<div class="d-flex align-items-center justify-content-between">
+				<h1 class="mb-0">Patient</h1>
+				<div class="d-flex gap-2">
+					<a class="btn btn-secondary" href="/patients">Back to Patients</a>
+					<a
+						class="btn btn-primary"
+						th:href="@{/records(patientId=${patient.id})}"
+					>
+						View Records
+					</a>
+				</div>
+			</div>
+
+			<div class="card mt-3">
+				<div class="card-body">
+					<div class="row">
+						<div class="col-md-3">
+							<div class="text-muted">ID</div>
+							<div th:text="${patient.id}"></div>
+						</div>
+						<div class="col-md-3">
+							<div class="text-muted">Document ID</div>
+							<div th:text="${patient.documentId}"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="text-muted">Full Name</div>
+							<div th:text="${patient.fullName}"></div>
+						</div>
+						<div class="col-md-2">
+							<div class="text-muted">Birth Date</div>
+							<div th:text="${patient.birthDate}"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<h4 class="mt-4">Recent Records</h4>
+
+			<div th:if="${recentRecords.totalElements == 0}" class="text-muted">
+				No records yet. Create one from the Records page.
+			</div>
+
+			<table
+				class="table table-bordered align-middle"
+				th:if="${recentRecords.totalElements > 0}"
+			>
+				<thead>
+					<tr>
+						<th style="width: 80px">ID</th>
+						<th>Symptoms</th>
+						<th>Diagnosis</th>
+						<th style="width: 220px">Created At</th>
+						<th style="width: 120px">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="r : ${recentRecords.content}">
+						<td th:text="${r.id}"></td>
+						<td th:text="${r.symptoms}"></td>
+						<td th:text="${r.diagnosis}"></td>
+						<td th:text="${r.createdAt}"></td>
+						<td>
+							<a
+								class="btn btn-info btn-sm"
+								th:href="@{/records/{id}(id=${r.id})}"
+							>
+								View
+							</a>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>

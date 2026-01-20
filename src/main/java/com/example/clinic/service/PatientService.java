@@ -1,55 +1,36 @@
 package com.example.clinic.service;
 
-import com.example.clinic.model.Patient;
-import com.example.clinic.repository.PatientRepository;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.PageImpl;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.clinic.model.Patient;
+import com.example.clinic.repository.PatientRepository;
 
+/**
+ * Patient service (DB-only).
+ */
 @Service
 public class PatientService {
 
     @Autowired
     private PatientRepository patientRepository;
 
-    @Value("${use.database:true}")
-    private boolean useDatabase;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    private static final Logger logger = LoggerFactory.getLogger(PatientService.class);
-
-    private List<Patient> loadHardcodedPatients() {
-        Resource resource = resourceLoader.getResource("classpath:data/hardcoded-data.json");
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(resource.getInputStream(), new TypeReference<List<Patient>>() {});
-        } catch (IOException e) {
-            logger.error("Failed to load hardcoded patients from JSON file", e);
-            return Collections.emptyList();
-        }
-    }
-
     public Page<Patient> listPatients(String search, Pageable pageable) {
         if (search == null || search.isBlank()) {
             return patientRepository.findAll(pageable);
         }
-        return patientRepository.findByFullNameContainingIgnoreCaseOrDocumentIdContainingIgnoreCase(search, search, pageable);
+        return patientRepository.findByFullNameContainingIgnoreCaseOrDocumentIdContainingIgnoreCase(
+                search, search, pageable
+        );
+    }
+
+    public List<Patient> listAllPatients() {
+        return patientRepository.findAll();
     }
 
     public Optional<Patient> getPatient(Long id) {
