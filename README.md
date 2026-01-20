@@ -193,9 +193,6 @@ This means:
 - Tables are created/updated automatically from entity classes.
 - Existing data is preserved when possible.
 - Foreign keys and constraints are managed by Hibernate.
-
-> Note: For production systems, migrations (Flyway/Liquibase) are preferred, but `ddl-auto=update` is acceptable for a learning/demo CRUD project.
-
 ---
 
 ## Project structure (high level)
